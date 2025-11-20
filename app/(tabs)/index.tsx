@@ -20,6 +20,35 @@ Notifications.setNotificationHandler({
   }),
 });
 
+/**
+ * 지정된 시간/분까지 남은 초를 계산합니다.
+ * @param {number} targetHour - 목표 시 (0-23)
+ * @param {number} targetMinute - 목표 분 (0-59)
+ * @returns {number} 다음 목표 시간까지 남은 초
+ */
+function calculateDelaySeconds(targetHour, targetMinute) {
+  // 1. 현재 시간
+  const now = new Date();
+
+  // 2. 오늘 목표 시간 설정
+  let targetDate = new Date();
+  targetDate.setHours(targetHour, targetMinute, 0, 0); // 초, 밀리초는 0으로 초기화
+
+  // 3. 목표 시간이 이미 지났다면, 목표 시간을 내일로 설정
+  // (예: 현재 오후 3시인데, 목표가 오전 8시라면 내일 오전 8시로)
+  if (targetDate.getTime() <= now.getTime()) {
+    targetDate.setDate(targetDate.getDate() + 1);
+  }
+
+  // 4. 지연 시간 (밀리초) 계산
+  const delayMilliseconds = targetDate.getTime() - now.getTime();
+
+  // 5. 초 단위로 반올림하여 반환
+  const delaySeconds = Math.round(delayMilliseconds / 1000);
+
+  // 최소 1초 이상이어야 합니다.
+  return Math.max(1, delaySeconds);
+}
 async function schedulePushNotification() {
   // 현재 시간으로부터 2분 후의 Date 객체를 생성합니다.
   const twoMinutesLaterDate = new Date(Date.now() + 2 * 60 * 1000); // 현재 날짜 및 시간을 가져옵니다.
@@ -32,17 +61,20 @@ async function schedulePushNotification() {
   // Date.getDay()의 값(0=일요일, 1=월요일, ..., 6=토요일)에 1을 더하면 해당 포맷이 됩니다.
   const repeatWeekday = twoMinutesLaterDate.getDay() + 1;
 
+  // 1. 다음 목표 시간까지 남은 초를 계산합니다.
+  const delayInSeconds = calculateDelaySeconds(repeatHour, repeatMinute);
+
+  // 2. 기존 알림을 모두 취소 (중복 방지)
+  await Notifications.cancelAllScheduledNotificationsAsync();
+
   const highPriorityAlarmId = await Notifications.scheduleNotificationAsync({
     content: {
-      title: "Happy new hour!",
+      title: `${repeatHour}시 ${repeatMinute}분에 예약된 알림입니다.`,
       sound: "default",
     },
     trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-      hour: repeatHour,
-      minute: repeatMinute,
-      timezone: "Asia/Seoul",
-      //weekday: repeatWeekday, // 현재 요일 (1=일요일, 7=토요일)
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: delayInSeconds,
       repeats: true,
     },
   });
