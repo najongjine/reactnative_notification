@@ -78,6 +78,11 @@ async function schedulePushNotification() {
       repeats: true,
     },
   });
+
+  // 💡 추가된 코드: 스케줄링 성공 로그
+  console.log(`✅ 알림이 성공적으로 스케줄링되었습니다.`);
+  console.log(`   - ID: ${highPriorityAlarmId}`);
+  console.log(`   - 다음 알림 시간: ${delayInSeconds}초 후`);
 }
 
 async function registerForPushNotificationsAsync() {
