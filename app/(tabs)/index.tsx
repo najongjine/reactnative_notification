@@ -26,7 +26,7 @@ Notifications.setNotificationHandler({
  * @param {number} targetMinute - 목표 분 (0-59)
  * @returns {number} 다음 목표 시간까지 남은 초
  */
-function calculateDelaySeconds(targetHour, targetMinute) {
+function calculateDelaySeconds(targetHour: number, targetMinute: number) {
   // 1. 현재 시간
   const now = new Date();
 
@@ -135,6 +135,12 @@ async function registerForPushNotificationsAsync() {
   return token;
 }
 
+async function cancelAllAlarms() {
+  // 현재 예약 걸려있는 모든 알림을 제거합니다.
+  await Notifications.cancelAllScheduledNotificationsAsync();
+  console.log("모든 알림 예약이 취소되었습니다.");
+}
+
 export default function HomeScreen() {
   const [expoPushToken, setExpoPushToken] = useState("");
   const [channels, setChannels] = useState<Notifications.NotificationChannel[]>(
@@ -201,6 +207,12 @@ export default function HomeScreen() {
           title="Press to schedule a notification"
           onPress={async () => {
             await schedulePushNotification();
+          }}
+        />
+        <Button
+          title="CancelAllAlram"
+          onPress={async () => {
+            await cancelAllAlarms();
           }}
         />
       </View>
